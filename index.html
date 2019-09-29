@@ -1,0 +1,64 @@
+<html>
+    <head lang="en">
+        <meta charset="UTF-8" />
+        <script src="jquery-3.4.1.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    </head>
+        
+        <style>
+                * {
+                  box-sizing: border-box;
+                }
+                
+                .row {
+                  display: flex;
+                }
+                
+                /* Create two equal columns that sits next to each other */
+                .column {
+                  flex: 50%;
+                  padding: 10px;
+                  height: 300px; /* Should be removed. Only for demonstration */
+                }
+                
+        </style>
+        <title>Tetris Agile</title>
+    </head>
+    <body>
+        <div class="row">
+                <div class="column" id="column1">
+                  <h1>Welcome To Tetris</h2>
+                  <button id="playButton">Play Tetris</button>
+            </div>
+            <div class="column" id="column2">
+                <canvas id="myCanvas" width="500" height="800" style="border:1px solid #000000;" hidden="true">
+                </canvas>
+            </div>
+            <div class="column" id="column3">
+                <h1 id="score" hidden="true">Score : </h1>
+                <button id="exitButton" hidden="true">Exit Game</button>
+            </div>
+        </div>
+    </body>
+    <script>
+        $(document).ready(function(){
+            $("#myCanvas").hide();
+            $("#playButton").click(function(){
+                $(this).hide();
+                $("#title").hide();
+                runTetris();
+            });
+        });
+        function runTetris(){
+            $("#score").show();
+            $("#myCanvas").show();
+            $("#exitButton").show();
+            
+        }
+
+        function exitTetris(){
+            
+        }
+
+    </script>
+</html>
