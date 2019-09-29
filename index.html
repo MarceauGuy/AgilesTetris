@@ -1,7 +1,6 @@
 <html>
     <head lang="en">
         <meta charset="UTF-8" />
-        <script src="jquery-3.4.1.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     </head>
         
@@ -19,7 +18,13 @@
                   flex: 50%;
                   padding: 10px;
                   height: 300px; /* Should be removed. Only for demonstration */
+                  position: relative;
                 }
+                #exitButton {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
                 
         </style>
         <title>Tetris Agile</title>
@@ -35,29 +40,81 @@
                 </canvas>
             </div>
             <div class="column" id="column3">
-                <h1 id="score" hidden="true">Score : </h1>
+                <h1 id="scoreTitle" hidden="true">Score : </h1>
+                <h2 id="scoreDisplay" hidden='true'>0</h2>
+                <button id="scoreButton1" hidden="true">1 ligne</button>
+                <button id="scoreButton2" hidden="true">2 lignes</button>
+                <button id="scoreButton3" hidden="true">3 lignes</button>
+                <button id="scoreButton4" hidden="true">4 lignes</button>
                 <button id="exitButton" hidden="true">Exit Game</button>
+
             </div>
         </div>
     </body>
     <script>
         $(document).ready(function(){
-            $("#myCanvas").hide();
+            $("#exitButton").click(function(){
+                exitTetris();
+
+            })
             $("#playButton").click(function(){
-                $(this).hide();
-                $("#title").hide();
                 runTetris();
             });
+            $("#scoreButton1").click(function(){
+                addScore(1);
+            });
+            $("#scoreButton2").click(function(){
+                addScore(2);
+            });
+            $("#scoreButton3").click(function(){
+                addScore(4);
+            });
+            $("#scoreButton4").click(function(){
+                addScore(8);
+            });
         });
+
         function runTetris(){
-            $("#score").show();
+            $("#playButton").hide();
+            $("#title").hide();
+            $("#scoreTitle").show();
             $("#myCanvas").show();
             $("#exitButton").show();
+            $("#scoreDisplay").show();
+            $("#scoreButton1").show();
+            $("#scoreButton2").show();
+            $("#scoreButton3").show();
+            $("#scoreButton4").show();
+            tetrisLoop();
             
         }
 
+        
+
         function exitTetris(){
-            
+            $("playButton").show();
+            $("#scoreTitle").hide();
+            $("#myCanvas").hide();
+            $("#exitButton").hide();
+            $("#scoreDisplay").hide();
+        }
+
+        async function tetrisLoop(){
+            var timerJeu = 1;
+            while(timerJeu>0){
+                await sleep(800);
+                timerJeu +=1;
+            console.log("Pièce n° : " + timerJeu);                    }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        var score = 0;
+        function addScore(multiplier){
+            score += 100 * multiplier;
+            $("#scoreDisplay").text(score.toString(10));
         }
 
     </script>
