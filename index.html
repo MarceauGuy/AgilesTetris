@@ -13,11 +13,10 @@
                   display: flex;
                 }
                 
-                /* Create two equal columns that sits next to each other */
                 .column {
                   flex: 50%;
                   padding: 10px;
-                  height: 300px; /* Should be removed. Only for demonstration */
+                  height: 300px;
                   position: relative;
                 }
                 #exitButton {
@@ -36,7 +35,7 @@
                   <button id="playButton">Play Tetris</button>
             </div>
             <div class="column" id="column2">
-                <canvas id="myCanvas" width="500" height="800" style="border:1px solid #000000;" hidden="true">
+                <canvas id="myCanvas" width="500" height="600" style="border:1px solid #000000;" hidden="true">
                 </canvas>
             </div>
             <div class="column" id="column3">
@@ -48,7 +47,7 @@
                 <button id="scoreButton4" hidden="true">4 lignes</button>
                 <input type="checkbox" id="tetrisTheme" name="TetrisTheme" onchange="PlayMusic();" hidden="true">
                 <label id="ckeckBoxTheme" for="tetrisTheme" hidden="true">Enable sound</label>
-                <button id="createForm" hidden="true">Créer une pièce</button>
+                <button id="createPiece" hidden="true">Créer une pièce</button>
 
                 <button id="exitButton" hidden="true">Exit Game</button>
 
@@ -56,10 +55,18 @@
         </div>
     </body>
     <script>
-        var forms = [];
-        var ctx;
+        var aPieces = [];
+        var oCtx;
+        var aGrid = [];
+        var iScale;
+        var oPieceMooving;
+        var iLastFrameTimeMs = 0;
+        var iTicksPerSec = 0.5;
+        var bPieceMoovingRotate = false;
+
         $(document).ready(function(){
-            ctx = document.getElementById("myCanvas").getContext("2d");
+            oCtx = document.getElementById("myCanvas").getContext("2d");
+            document.onkeydown = handleKeyPressed;
             $("#exitButton").click(function(){
                 exitTetris();
  
@@ -79,8 +86,9 @@
             $("#scoreButton4").click(function(){
                 addScore(8);
             });
-            $("#createForm").click(function() {
-                forms.push(new Form());
+            $("#createPiece").click(function() {
+            	oPieceMooving = new Piece();
+                aPieces.push(oPieceMooving);
             });
         });
  
@@ -95,15 +103,35 @@
             $("#scoreButton2").show();
             $("#scoreButton3").show();
             $("#scoreButton4").show();
-            $("#createForm").show();
+            $("#createPiece").show();
             $("#tetrisTheme").show();
 
             $("#checkBoxTheme").show();
-            tetrisLoop();
 
-           
+
+            var oCanvas = document.getElementById("myCanvas");
+            iScale = oCanvas.clientWidth / 10;
+            for(var i = 0; i < oCanvas.clientHeight / iScale; i++) {
+            	aGrid[i] = [];
+            	for(var j = 0; j < 10; j++) {
+            		aGrid[i][j] = 0;
+            	}
+            }
+
+            requestAnimationFrame(mainLoop);
         }
- 
+
+        function handleKeyPressed(oEvent) {
+        	if(oPieceMooving) {
+        		if(oEvent.keyCode === 37) {
+	        		oPieceMooving.moove(true);
+	        	} else if(oEvent.keyCode === 39) {
+	        		oPieceMooving.moove(false);
+	        	} else if(oEvent.keyCode === 38) {
+	        		bPieceMoovingRotate = true;
+	        	}
+        	}
+        }
        
  
         function exitTetris(){
@@ -117,7 +145,7 @@
             $("#scoreButton2").hide();
             $("#scoreButton3").hide();
             $("#scoreButton4").hide();
-            $("#createForm").hide();
+            $("#createPiece").hide();
             $("#tetrisTheme").hide();
             $("#checkBoxTheme").hide();
         }
@@ -137,27 +165,69 @@
                 audio.currentTime = 0;
             }
         }
- 
-        async function tetrisLoop(){
-            var timerJeu = 1;
-            while(timerJeu>0){
-                await sleep(800);
-                timerJeu +=1;
-                console.log("Pièce n° : " + timerJeu);
-                draw();
-                update();
-            }
+
+        function mainLoop(iTimeStamp) {
+        	draw();
+        	if(iTimeStamp < iLastFrameTimeMs + (1000 * iTicksPerSec)) {
+        		requestAnimationFrame(mainLoop);
+        		return;
+        	}
+        	iLastFrameTimeMs = iTimeStamp;
+        	update();
+        	requestAnimationFrame(mainLoop);
         }
  
         function update() {
-            forms.forEach(function(element) {
-                element.y += 1;
+            aPieces.forEach(function(element) {
+                element.update();
             });
+            checkCompletedLine();
         }
  
+
+        function checkCompletedLine(){
+            var aIndexLines = [];
+            var bCompletedLine;
+            for(var i=0;i<aGrid.length;i++){
+                bCompletedLine = true;
+                for(var j=0;j<aGrid[0].length;j++){
+                    if(aGrid[i][j]===0){
+                        bCompletedLine = false;
+                        break;
+                    }
+                }
+                if(bCompletedLine){
+                    aIndexLines.push(i);
+                }
+            }
+            if(aIndexLines.length!==0){
+                eraseCompletedLines(aIndexLines);
+            }
+        }
+
+        function eraseCompletedLines(aIndexLines){
+            var aReturnedValues = [];
+            for(var i=0; i<aIndexLines.length;i++){
+                for(var j=0; j<aGrid[0].length;j++){
+                    aGrid[aIndexLines[i]][j] = 0;
+                    for(var k = 0; k < aPieces.length; k++) {
+                        aReturnedValues = aPieces[k].getSquarePieceFromGridPos(j, aIndexLines[i]);
+                        if(aReturnedValues){
+                            aReturnedValues[0].aSquares.splice(aReturnedValues[1], 1);
+                        }
+                    }
+                }
+            }
+        }
+
         function draw() {
-            ctx.clearRect(0, 0, 500, 800);
-            forms.forEach(function(element) {
+        	if(bPieceMoovingRotate) {
+        		oPieceMooving.rotate();
+        		bPieceMoovingRotate = false;
+        	}
+        	var oCanvas = document.getElementById("myCanvas");
+            oCtx.clearRect(0, 0, oCanvas.clientWidth, oCanvas.clientHeight);
+            aPieces.forEach(function(element) {
                 element.draw();
             });
         }
@@ -172,22 +242,170 @@
             $("#scoreDisplay").text(score.toString(10));
         }
  
-        function Form() {
-            this.x = 2;
-            this.y = -3;
-            this.size = 50;
-            this.pattern = createPattern(Math.random() * 6);
+        function Piece() {
+            this.iX = 2;
+            this.iY = 0;
+            this.sColor="#FF0000";
+            this.aPattern = createPattern(Math.random() * 6);
+            this.createPiece();
+            this.writeEraseOnGrid(true);
         }
+
+ 		Piece.prototype.createPiece = function() {
+            this.aSquares = [];
+ 			for(var i = 0; i < this.aPattern[0].length; i++) {
+            	for(var j = 0; j < this.aPattern.length; j++) {
+            		if(this.aPattern[i][j] === 1) {
+            			this.aSquares.push(new Square(this.iX + j, this.iY + i));
+            		}
+            	}
+            }
+ 		}
  
-        Form.prototype.draw = function() {
-            ctx.fillStyle = "#FF0000";
-            for(var i = 0; i < 4; i++) {
-                for(var j = 0; j < 4; j++) {
-                    if(this.pattern[i][j] !== 0) {
-                        ctx.fillRect((this.x + i) * this.size, (this.y + j) * this.size, this.size, this.size);
-                    }
+        Piece.prototype.draw = function() {
+            for(var i = 0; i < this.aSquares.length; i++) {
+                this.aSquares[i].draw(this.sColor);
+            }
+        }
+
+        Piece.prototype.getSquarePieceFromGridPos = function(iX, iY) {
+            for(var i = 0; i < this.aSquares.length; i++) {
+                if(this.aSquares[i].iX === iX && this.aSquares[i].iY === iY) {
+                    return [this, i];
                 }
             }
+            return null;
+        }
+
+ 		Piece.prototype.writeEraseOnGrid = function(bWrite) {
+ 			for(var i = 0; i < this.aSquares.length; i++) {
+ 				aGrid[this.aSquares[i].iY][this.aSquares[i].iX] = bWrite ? 1 : 0;
+ 			}
+ 		}
+
+        Piece.prototype.rotate = function() {
+        	if(this.canRotate()) {
+        		this.writeEraseOnGrid(false);
+	        	this.aPattern = rotatePattern(this.aPattern);
+	        	this.createPiece();
+	        	this.writeEraseOnGrid(true);
+        	}
+        }
+
+        Piece.prototype.canRotate = function() {
+        	var aNewPattern = rotatePattern(this.aPattern);
+        	for(var i = 0; i < aNewPattern.length; i++) {
+        		for(var j = 0; j < aNewPattern[0].length; j++) {
+        			if(this.iY + i >= aGrid.length || this.iX + j >= aGrid[0].length || this.iX + j < 0 || this.iY + i < 0 ||
+        			(aNewPattern[i][j] === 1 && aGrid[this.iY + i][this.iX + j] === 1 && this.aPattern[i][j] === 0)) {
+        				return false;
+        			}
+        		}
+        	}
+
+        	return true;
+        }
+
+        Piece.prototype.moove = function(bLeft) {
+        	this.writeEraseOnGrid(false);
+        	var bCanMoove = true;
+        	for(var i = 0; i < this.aSquares.length; i++) {
+        		if(this.aSquares[i].collideSideWall(bLeft) || this.aSquares[i].collidePieceOnSide(bLeft, this.aSquares)) {
+        			bCanMoove = false;
+        		}
+        	}
+        	if(bCanMoove) {
+        		this.iX += bLeft ? -1 : 1;
+        		for(i = 0; i < this.aSquares.length; i++) {
+	        		this.aSquares[i].moove(bLeft)
+	        	}
+        	}
+        	this.writeEraseOnGrid(true);
+        }
+
+        Piece.prototype.update = function() {
+        	this.writeEraseOnGrid(false);
+        	var bFall = true;
+        	for(var i = 0; i < this.aSquares.length; i++) {
+        		if(this.aSquares[i].iY === aGrid.length - 1 || this.aSquares[i].collideOtherPiece(this.aSquares)) {
+        			bFall = false;
+        		}
+        	}
+        	if(bFall) {
+        		this.iY += 1;
+        	} else {
+        		if(this === oPieceMooving) {
+        			oPieceMooving = null;
+        		}
+        	}
+        	for(i = 0; i < this.aSquares.length; i++) {
+    			this.aSquares[i].update(bFall);
+    		}
+        	this.writeEraseOnGrid(true);
+        }
+
+        function Square(iX, iY) {
+        	this.iX = iX;
+        	this.iY = iY;
+        }
+
+        Square.prototype.draw = function(sColor) {
+        	oCtx.fillStyle = "#000000";
+        	oCtx.fillRect(this.iX * iScale, this.iY * iScale, iScale, iScale);
+        	oCtx.fillStyle = sColor;
+        	oCtx.fillRect(this.iX * iScale + 5, this.iY * iScale + 5, iScale - 10, iScale - 10);
+        }
+
+        Square.prototype.moove = function(bLeft) {
+        	this.iX += bLeft ? -1 : 1;
+        }
+
+        Square.prototype.update = function(bFall) {
+        	if(bFall) {
+        		this.iY += 1;
+        	}
+        }
+
+        Square.prototype.collideSideWall = function(bLeft) {
+        	if((this.iX === 0 && bLeft) || (this.iX === aGrid[0].length-1 && !bLeft)) {
+        		return true;
+        	}
+        	return false;
+        }
+
+        Square.prototype.collidePieceOnSide = function(bLeft, aSquares) {
+        	var iTest = bLeft ? -1 : 1;
+        	if(aGrid[this.iY][this.iX + iTest] === 1) {
+				for(var i = 0; i < aSquares.length; i++) {
+					if(aSquares[i].iX === this.iX + iTest && aSquares[i].iY === this.iY) {
+						return false;
+					}
+				}
+				return true;
+        	}
+        	return false;
+        }
+
+        Square.prototype.collideOtherPiece = function(aSquares) {
+        	if(aGrid[this.iY + 1][this.iX] === 1) {
+				for(var i = 0; i < aSquares.length; i++) {
+					if(aSquares[i].iX === this.iX && aSquares[i].iY === this.iY + 1) {
+						return false;
+					}
+				}
+				return true;
+        	}
+        	return false;
+        }
+
+        function rotatePattern(aPattern) {
+        	var aPatternToBeReturned = [[],[],[],[]];
+        	for(var i = 0; i < aPattern.length; i++) {
+        		for(var j = 0; j < aPattern[0].length; j++) {
+        			aPatternToBeReturned[j][aPattern.length - 1 - i] = aPattern[i][j];
+        		}
+        	}
+        	return aPatternToBeReturned;
         }
  
         function createPattern(i) {
