@@ -1,4 +1,4 @@
-<html>
+﻿<html>
     <head lang="en">
         <meta charset="UTF-8" />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -33,6 +33,8 @@
                 <div class="column" id="column1">
                   <h1>Welcome To Tetris</h2>
                   <button id="playButton">Play Tetris</button>
+                  <button id="playButtonUnlimitied" hidden="true">Unlimited</button>
+                  <button id="playButtonNotUnlimited" hidden="true">Not Unlimited</button>
             </div>
             <div class="column" id="column2">
                 <canvas id="myCanvas" width="500" height="600" style="border:1px solid #000000;" hidden="true">
@@ -48,12 +50,14 @@
                 <input type="checkbox" id="tetrisTheme" name="TetrisTheme" onchange="PlayMusic();" hidden="true">
                 <label id="ckeckBoxTheme" for="tetrisTheme" hidden="true">Enable sound</label>
                 <button id="createPiece" hidden="true">Créer une pièce</button>
-
+                <input type="text" id="exportResultat" hidden="true">
+                <button type="button" id="exporter" hidden="true">Exporter le resultat</button>
                 <button id="exitButton" hidden="true">Exit Game</button>
 
             </div>
         </div>
     </body>
+
     <script>
         var aPieces = [];
         var oCtx;
@@ -72,8 +76,19 @@
  
             })
             $("#playButton").click(function(){
+                $("$playButtonUnlimited").show();
+                $("$playButtonNotUnlimited").show();
+                $("$playButton").hide();
+                
+            });
+            $("#playButtonUnlimited").click(function(){
                 runTetris();
             });
+            $("#playButtonNotUnlimited").click(function(){
+                maxScore = 2000;
+                runTetris();
+            });
+            
             $("#scoreButton1").click(function(){
                 addScore(1);
             });
@@ -90,8 +105,11 @@
             	oPieceMooving = new Piece();
                 aPieces.push(oPieceMooving);
             });
+            $("#exporter").click(function () {
+                exporter();
+            });
         });
- 
+
         function runTetris(){
             $("#playButton").hide();
             $("#title").hide();
@@ -105,7 +123,8 @@
             $("#scoreButton4").show();
             $("#createPiece").show();
             $("#tetrisTheme").show();
-
+            $("#exportResultat").show();
+            $("#exporter").show();
             $("#checkBoxTheme").show();
 
 
@@ -147,6 +166,8 @@
             $("#scoreButton4").hide();
             $("#createPiece").hide();
             $("#tetrisTheme").hide();
+            $("#exportResultat").hide();
+            $("#exporter").hide();
             $("#checkBoxTheme").hide();
         }
 
@@ -167,6 +188,9 @@
         }
 
         function mainLoop(iTimeStamp) {
+            if(score >= maxScore){
+                exitTetris();
+            }
         	draw();
         	if(iTimeStamp < iLastFrameTimeMs + (1000 * iTicksPerSec)) {
         		requestAnimationFrame(mainLoop);
@@ -218,6 +242,7 @@
                     }
                 }
             }
+            addScore(aIndexLines.length);
         }
 
         function draw() {
@@ -237,6 +262,7 @@
         }
  
         var score = 0;
+        var maxScore = 100000;
         function addScore(multiplier){
             score += 100 * multiplier;
             $("#scoreDisplay").text(score.toString(10));
@@ -407,7 +433,25 @@
         	}
         	return aPatternToBeReturned;
         }
- 
+
+        function exporter()
+        {
+        let name = $("#exportResultat").val();
+        let score = $("#scoreDisplay").text();
+        let contenu = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(
+        {
+            resultat:
+            {
+                name: name,
+                score: score,
+            }
+        }));
+        let telechargement = $("<a></a>").attr("href", contenu).attr("download", name + ".json");
+        $("body").append(telechargement);
+        telechargement[0].click();
+        telechargement[0].remove();
+        }
+
         function createPattern(i) {
             if(i < 1) {
                 return [
