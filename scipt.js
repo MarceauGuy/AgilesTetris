@@ -1,16 +1,24 @@
 
-var aPieces = [];
+        var aPieces = [];
         var oCtx;
         var aGrid = [];
+        var aGridNextPiece = [];
         var iScale;
+        var iScaleNextPiece;         
         var oPieceMooving;
         var iLastFrameTimeMs = 0;
         var iTicksPerSec = 0.5;
         var bPieceMoovingRotate = false;
         var iNextPiece = parseInt(Math.random() * 6);
+        var iFps = 0;
+        var iCount = 0;
+        var iLastFrameTimeMsForFps = 0;
+        var score = 0;
+        var maxScore = 100000;
 
         $(document).ready(function(){
             oCtx = document.getElementById("myCanvas").getContext("2d");
+            oCtxNextPiece = document.getElementById("canvasNextPiece").getContext("2d");
             document.onkeydown = handleKeyPressed;
             $("#exitButton").click(function(){
                 exitTetris();
@@ -31,18 +39,6 @@ var aPieces = [];
                 runTetris();
             });
             
-            $("#scoreButton1").click(function(){
-                addScore(1);
-            });
-            $("#scoreButton2").click(function(){
-                addScore(2);
-            });
-            $("#scoreButton3").click(function(){
-                addScore(4);
-            });
-            $("#scoreButton4").click(function(){
-                addScore(8);
-            });
             $("#createPiece").click(function() {
             	oPieceMooving = new Piece();
                 aPieces.push(oPieceMooving);
@@ -53,16 +49,13 @@ var aPieces = [];
         });
 
         function runTetris(){
+            $("#canvasNextPiece").show();
             $("#playButton").hide();
             $("#title").hide();
             $("#scoreTitle").show();
             $("#myCanvas").show();
             $("#exitButton").show();
             $("#scoreDisplay").show();
-            $("#scoreButton1").show();
-            $("#scoreButton2").show();
-            $("#scoreButton3").show();
-            $("#scoreButton4").show();
             $("gotoOptions").show();
             $("#createPiece").show();
             $("#exportResultat").show();
@@ -78,6 +71,14 @@ var aPieces = [];
             	for(var j = 0; j < 10; j++) {
             		aGrid[i][j] = 0;
             	}
+            }
+            var oCanvasNextPiece = document.getElementById("canvasNextPiece");
+            iScaleNextPiece = oCanvasNextPiece.clientWidth / 4;
+            for(var i= 0; i<oCanvasNextPiece.clientHeight / iScaleNextPiece; i++){
+                aGridNextPiece[i] = [];
+                for(var j = 0; j < 4; j++) {
+                    aGridNextPiece[i][j]= 0;
+                }
             }
 
             requestAnimationFrame(mainLoop);
@@ -103,10 +104,6 @@ var aPieces = [];
             $("#exitButton").hide();
             $("#scoreDisplay").hide();
             $("#scoreDisplay").hide();
-            $("#scoreButton1").hide();
-            $("#scoreButton2").hide();
-            $("#scoreButton3").hide();
-            $("#scoreButton4").hide();
             $("#createPiece").hide();
             $("#exportResultat").hide();
             $("#exporter").hide();
@@ -117,6 +114,14 @@ var aPieces = [];
         function mainLoop(iTimeStamp) {
             if(score >= maxScore){
                 exitTetris();
+            }
+            if(iTimeStamp > iLastFrameTimeMsForFps + 1000) {
+                iLastFrameTimeMsForFps = iTimeStamp;
+                iFps = iCount;
+                iCount = 0;
+                console.log(iFps);
+            } else {
+                iCount++;
             }
         	draw();
         	if(iTimeStamp < iLastFrameTimeMs + (1000 * iTicksPerSec)) {
@@ -133,27 +138,33 @@ var aPieces = [];
                 element.update();
             });
             checkCompletedLine();
+            if(!oPieceMooving){
+            	oPieceMooving = new Piece();
+                aPieces.push(oPieceMooving);
+            }
         }
  
 
         function checkCompletedLine(){
-            var aIndexLines = [];
-            var bCompletedLine;
-            for(var i=0;i<aGrid.length;i++){
-                bCompletedLine = true;
-                for(var j=0;j<aGrid[0].length;j++){
-                    if(aGrid[i][j]===0){
-                        bCompletedLine = false;
-                        break;
+            if(!oPieceMooving){
+                var aIndexLines = [];
+                var bCompletedLine;
+                for(var i=0;i<aGrid.length;i++){
+                    bCompletedLine = true;
+                    for(var j=0;j<aGrid[0].length;j++){
+                        if(aGrid[i][j]===0){
+                            bCompletedLine = false;
+                            break;
+                        }
+                    }
+                    if(bCompletedLine){
+                        aIndexLines.push(i);
                     }
                 }
-                if(bCompletedLine){
-                    aIndexLines.push(i);
+                if(aIndexLines.length!==0){
+                    eraseCompletedLines(aIndexLines);
                 }
-            }
-            if(aIndexLines.length!==0){
-                eraseCompletedLines(aIndexLines);
-            }
+            }   
         }
 
         function eraseCompletedLines(aIndexLines){
@@ -171,6 +182,7 @@ var aPieces = [];
             }
             addScore(aIndexLines.length);
         }
+        
 
         function draw() {
         	if(bPieceMoovingRotate) {
@@ -183,17 +195,28 @@ var aPieces = [];
                 element.draw();
             });
         }
- 
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
+
+        function drawNextPiece(){
+            var oCanvasNextPiece = document.getElementById("canvasNextPiece");
+            oCtxNextPiece.clearRect(0, 0, oCanvasNextPiece.clientWidth, oCanvasNextPiece.clientHeight);
+            var aPatternNextPiece = createPattern(iNextPiece);
+            for(var i = 0; i<aPatternNextPiece[0].length;i++){
+                for( var j = 0;j<aPatternNextPiece.length; j++){
+                    if(aPatternNextPiece[i][j] === 1){
+                        oCtxNextPiece.fillStyle = "#000000";
+                        oCtxNextPiece.fillRect(j * iScaleNextPiece, i * iScaleNextPiece, iScaleNextPiece, iScaleNextPiece);
+                        oCtxNextPiece.fillStyle = "#FF0000";
+                        oCtxNextPiece.fillRect(j * iScaleNextPiece + 5, i * iScaleNextPiece + 5, iScaleNextPiece - 10, iScaleNextPiece - 10);
+                    }
+                }
+            }
         }
  
-        var score = 0;
-        var maxScore = 100000;
         function addScore(multiplier){
-            score += 100 * multiplier;
+            score += 100 * Math.pow(2,multiplier);
             $("#scoreDisplay").text(score.toString(10));
         }
+
         
         function Piece() {
             this.iX = 2;
@@ -202,9 +225,11 @@ var aPieces = [];
             this.aPattern = createPattern(iNextPiece);
             iNextPiece = parseInt(Math.random() * 6);
             $("#idNextPiece").text(iNextPiece.toString(10));
+            drawNextPiece();
             this.createPiece();
             this.writeEraseOnGrid(true);
         }
+
 
  		Piece.prototype.createPiece = function() {
             this.aSquares = [];
