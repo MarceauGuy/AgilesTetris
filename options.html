@@ -27,9 +27,9 @@
             <input type="checkbox" id="tetrisTheme" name="TetrisTheme" onchange="PlayMusic();" hidden="true">
             <label id="ckeckBoxTheme" for="tetrisTheme" hidden="true">Enable sound</label>
             <br /><br />
-            <input type="button" value="+" id="highVol" hidden="true">
+            <input type="button" value="-" id="lowVol" hidden="true" onclick="AudioVolume(2);">
             <input type="text" id="volume" disabled hidden="true" />
-            <input type="button" value="-" id="lowVol" hidden="true">
+            <input type="button" value="+" id="highVol" hidden="true" onclick="AudioVolume(1);">
         </div>
     </div>
 
