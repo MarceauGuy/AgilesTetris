@@ -7,14 +7,16 @@
         var iScaleNextPiece;         
         var oPieceMooving;
         var iLastFrameTimeMs = 0;
-        var iTicksPerSec = 0.5;
+        var iTicksPerSec = 1;
         var bPieceMoovingRotate = false;
-        var iNextPiece = parseInt(Math.random() * 6);
+        var iNextPiece = parseInt(Math.random() * 7);
         var iFps = 0;
         var iCount = 0;
         var iLastFrameTimeMsForFps = 0;
         var score = 0;
         var maxScore = 100000;
+        var bPieceDown = false;
+        var bDifficultyToRaise = false;
 
         $(document).ready(function(){
             oCtx = document.getElementById("myCanvas").getContext("2d");
@@ -31,6 +33,7 @@
                 
             });
             $("#playButtonUnlimited").click(function(){
+                bDifficultyToRaise = true;
                 runTetris();
 
             });
@@ -92,7 +95,13 @@
 	        		oPieceMooving.moove(false);
 	        	} else if(oEvent.keyCode === 38) {
 	        		bPieceMoovingRotate = true;
-	        	}
+	        	} else if(oEvent.keyCode === 32) {
+                    while(oPieceMooving) {
+                        oPieceMooving.update();
+                    }
+                } else if(oEvent.keyCode === 40) {
+                    oPieceMooving.update();
+                }
         	}
         }
        
@@ -110,8 +119,22 @@
             $("#gotoOptions").hide();
         }
 
+        function raiseDifficulty(){
+            iTicksPerSec = score / 1500 + 1;
+        }
 
         function mainLoop(iTimeStamp) {
+            if(bDifficultyToRaise){
+                raiseDifficulty();
+            }
+            /*
+            if(score % 500 === 0 && !bDifficultyToRaise){
+                bDifficultyToRaise = true;
+                iTicksPerSec+=0.25;
+            }
+            else if(score % 500 != 0 && bDifficultyToRaise){
+                bDifficultyToRaise = false;
+            }*/
             if(score >= maxScore){
                 exitTetris();
             }
@@ -124,7 +147,7 @@
                 iCount++;
             }
         	draw();
-        	if(iTimeStamp < iLastFrameTimeMs + (1000 * iTicksPerSec)) {
+        	if(iTimeStamp < iLastFrameTimeMs + (1000 / iTicksPerSec)) {
         		requestAnimationFrame(mainLoop);
         		return;
         	}
@@ -223,7 +246,7 @@
             this.iY = 0;
             this.sColor="#FF0000";
             this.aPattern = createPattern(iNextPiece);
-            iNextPiece = parseInt(Math.random() * 6);
+            iNextPiece = parseInt(Math.random() * 7);
             $("#idNextPiece").text(iNextPiece.toString(10));
             drawNextPiece();
             this.createPiece();
@@ -448,6 +471,13 @@
                         [0, 0, 1, 0],
                         [0, 1, 1, 0],
                         [0, 1, 0, 0]
+                    ]
+            } else if(i < 7) {
+                return [
+                        [0, 0, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 1, 0],
+                        [0, 1, 1, 0]
                     ]
             }
         }
