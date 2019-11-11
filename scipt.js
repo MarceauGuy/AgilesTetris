@@ -17,6 +17,8 @@
         var maxScore = 100000;
         var bPieceDown = false;
         var bDifficultyToRaise = false;
+        var hasPower = false;
+        var doubleScorePower = false;
 
         $(document).ready(function(){
             oCtx = document.getElementById("myCanvas").getContext("2d");
@@ -59,6 +61,8 @@
             $("#myCanvas").show();
             $("#exitButton").show();
             $("#scoreDisplay").show();
+
+            $("#powerDisplay").show();
             $("gotoOptions").show();
             $("#createPiece").show();
             $("#exportResultat").show();
@@ -88,6 +92,11 @@
         }
 
         function handleKeyPressed(oEvent) {
+            if(hasPower){
+                if(oEvent.keyCode === 75){
+                    usePower();
+                }
+            }
         	if(oPieceMooving) {
         		if(oEvent.keyCode === 37) {
 	        		oPieceMooving.moove(true);
@@ -112,7 +121,7 @@
             $("#myCanvas").hide();
             $("#exitButton").hide();
             $("#scoreDisplay").hide();
-            $("#scoreDisplay").hide();
+            $("#powerDisplay").hide();
             $("#createPiece").hide();
             $("#exportResultat").hide();
             $("#exporter").hide();
@@ -166,7 +175,16 @@
                 aPieces.push(oPieceMooving);
             }
         }
- 
+
+        function usePower(){
+            if(hasPower){
+                hasPower = false;
+                doubleScorePower = true;
+                $("#scoreDisplay").text("Double score power utilisé");
+
+            }
+        }
+
 
         function checkCompletedLine(){
             if(!oPieceMooving){
@@ -236,8 +254,27 @@
         }
  
         function addScore(multiplier){
+            
+               
+            
             score += 100 * Math.pow(2,multiplier);
+            console.log(score);
+            if(doubleScorePower){
+                doubleScorePower = false;
+
+                $("#scoreDisplay").text("");
+                score = score*2;
+            }
             $("#scoreDisplay").text(score.toString(10));
+
+            if(!hasPower){
+                var nextPower;
+                if(score>=500){
+                    hasPower = true;
+                    nextPower = parseInt(Math.random() * 1);
+                    console.log($("#scoreDisplay").text("Double score power dispo"));
+                }
+            }
         }
 
         
