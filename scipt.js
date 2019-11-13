@@ -17,9 +17,14 @@ var score = 0;
 var maxScore = 100000;
 var bPieceDown = false;
 var bDifficultyToRaise = false;
-var hasPower = false;
+var powerTable = ["doublePower","deletePiece"];
+var powerTableAvailable = [];
+var powerTableToUse = ["Vous pouvez utiliser doublePower","Vous pouvez utiliser deletePiece"];
+var powerTableUsed = ["Vous avez utilisé doublePower","Vous avez utilisé deletePiece"];
+var deletePiece = false;
+var iterPower = 1;
 var doubleScorePower = false;
-
+var aNewPattern;
 var audio = new Audio('tetris.mp3');
 var audVol;
 var inverse = 1;
@@ -125,8 +130,9 @@ function runTetris() {
 }
 
 function handleKeyPressed(oEvent) {
-    if (hasPower) {
+    if (powerTableAvailable) {
         if (oEvent.keyCode === 75) {
+            console.log("Usepower()");
             usePower();
         }
     }
@@ -251,12 +257,33 @@ function update() {
 }
 
 function usePower() {
-    if (hasPower) {
-        hasPower = false;
-        doubleScorePower = true;
-        $("#scoreDisplay").text("Double score power utilisé");
-
+    if(powerTableAvailable){
+        switch(powerTableAvailable[0]){
+            case powerTable[0]:
+                    powerTableAvailable.shift();
+                    doubleScoreUse();
+                break;
+            case powerTable[1]:
+                powerTableAvailable.shift();
+                    deletePieceUse();
+                break;
+        }
     }
+}
+function doubleScoreUse(){
+    doubleScorePower = true;
+    console.log("doubleScoreUse()");
+    $("#powerDisplay").text(powerTableUsed[0]);
+
+
+}
+
+function deletePieceUse(){
+    $("#powerDisplay").text(powerTableUsed[1]);
+    console.log("Delete piece utilisé")
+
+
+
 }
 
 function checkCompletedLine() {
@@ -327,24 +354,29 @@ function drawNextPiece() {
 }
 
 function addScore(multiplier) {
-    score += 100 * Math.pow(2, multiplier);
-    console.log(score);
-    if (doubleScorePower) {
+    if(!doubleScorePower){
+        score += 100 * Math.pow(2, multiplier);
+    }
+    else{
+        score += (100 * Math.pow(2, multiplier))*2;
         doubleScorePower = false;
 
-        $("#scoreDisplay").text("");
-        score = score * 2;
+        $("#powerDisplay").text("");
+        console.log("Double score utilisé")
     }
     $("#scoreDisplay").text(score.toString(10));
-
-    if (!hasPower) {
-        var nextPower;
-        if (score >= 500) {
-            hasPower = true;
-            nextPower = parseInt(Math.random() * 1);
-            console.log($("#scoreDisplay").text("Double score power dispo"));
-        }
+    var nextPower;
+    console.log(score%(500* iterPower) >= 0);
+    console.log(score>=500*iterPower);
+    if (score%(500* iterPower) >= 0 && score>=500*iterPower ) {
+        console.log("On rentre la dedans")
+        nextPower = parseInt(Math.random() * 2);
+        console.log(nextPower);
+        powerTableAvailable.push(powerTable[nextPower-1]);
+        console.log($("#powerDisplay").text(powerTableToUse[nextPower-1]));
+        iterPower+=1;
     }
+
 }
 
 
@@ -394,23 +426,35 @@ Piece.prototype.writeEraseOnGrid = function (bWrite) {
 }
 
 Piece.prototype.rotate = function () {
+    aNewPattern = rotatePattern(this.aPattern);
     if (this.canRotate()) {
         this.writeEraseOnGrid(false);
-        this.aPattern = rotatePattern(this.aPattern);
+        this.aPattern = aNewPattern;
         this.createPiece();
         this.writeEraseOnGrid(true);
     }
 }
 
 Piece.prototype.canRotate = function () {
-    var aNewPattern = rotatePattern(this.aPattern);
-    for (var i = 0; i < aNewPattern.length; i++) {
-        for (var j = 0; j < aNewPattern[0].length; j++) {
-            if (this.iY + i >= aGrid.length || this.iX + j >= aGrid[0].length || this.iX + j < 0 || this.iY + i < 0 ||
-                (aNewPattern[i][j] === 1 && aGrid[this.iY + i][this.iX + j] === 1 && this.aPattern[i][j] === 0)) {
+    var bMoveSide = false;
+    var bCollideLeft = false;
+    for(var i = 0; i < aNewPattern.length; i++) {
+        for(var j = 0; j < aNewPattern[0].length; j++) {
+            if((this.iX + j >= aGrid[0].length || this.iX + j < 0) && aNewPattern[i][j] === 1) {
+                bMoveSide = true;
+                if(this.iX + j < 0) {
+                    bCollideLeft = true;
+                }
+            }
+            if(this.iY + i >= aGrid.length || this.iY + i < 0 ||
+            (aNewPattern[i][j] === 1 && aGrid[this.iY + i][this.iX + j] === 1 && this.aPattern[i][j] === 0)) {
                 return false;
             }
         }
+    }
+    if(bMoveSide) {
+        this.moove(!bCollideLeft);
+        this.canRotate();
     }
 
     return true;
