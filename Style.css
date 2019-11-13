@@ -14,11 +14,11 @@
     position: relative;
 }
 
-#exitButton {
+/*#exitButton {
     position: absolute;
     bottom: 0;
     left: 0;
-}
+}*/
 
 #myCanvas {
     border: 1px solid #000000;
