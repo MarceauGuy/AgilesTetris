@@ -17,17 +17,18 @@ var score = 0;
 var maxScore = 100000;
 var bPieceDown = false;
 var bDifficultyToRaise = false;
-var powerTable = ["doublePower","deletePiece"];
+var powerTable = ["doublePower", "deletePiece"];
 var powerTableAvailable = [];
-var powerTableToUse = ["Vous pouvez utiliser doublePower","Vous pouvez utiliser deletePiece"];
-var powerTableUsed = ["Vous avez utilisé doublePower","Vous avez utilisé deletePiece"];
+var powerTableToUse = ["Vous pouvez utiliser doublePower", "Vous pouvez utiliser deletePiece"];
+var powerTableUsed = ["Vous avez utilisé doublePower", "Vous avez utilisé deletePiece"];
 var deletePiece = false;
-var iterPower = 1;
 var doubleScorePower = false;
 var aNewPattern;
 var audio = new Audio('tetris.mp3');
 var audVol;
 var inverse = 1;
+var nextPower = 0;
+var nextPowerIndice = [];
 
 $(document).ready(function () {
     oCtx = document.getElementById("myCanvas").getContext("2d");
@@ -101,6 +102,7 @@ function runTetris() {
     $("#scoreDisplay").show();
 
     $("#powerDisplay").show();
+    $("#powerDisplayUsed").show();
     $("gotoOptions").show();
     $("#createPiece").show();
     $("#exportResultat").show();
@@ -137,37 +139,31 @@ function handleKeyPressed(oEvent) {
         }
     }
     if (oPieceMooving) {
-        if (oEvent.keyCode === 37)
-        {
+        if (oEvent.keyCode === 37) {
             if (inverse == 1) {
                 oPieceMooving.moove(true);
             }
             else if (inverse == 2) {
                 oPieceMooving.moove(false);
-            }            
+            }
         }
-        else if (oEvent.keyCode === 39)
-        {
+        else if (oEvent.keyCode === 39) {
             if (inverse == 1) {
                 oPieceMooving.moove(false);
             }
-            else if (inverse == 2) {                
+            else if (inverse == 2) {
                 oPieceMooving.moove(true);
-            } 
+            }
         }
-        else if (oEvent.keyCode === 38)
-        {
+        else if (oEvent.keyCode === 38) {
             bPieceMoovingRotate = true;
         }
-        else if (oEvent.keyCode === 32)
-        {
-            while (oPieceMooving)
-            {
+        else if (oEvent.keyCode === 32) {
+            while (oPieceMooving) {
                 oPieceMooving.update();
             }
         }
-        else if (oEvent.keyCode === 40)
-        {
+        else if (oEvent.keyCode === 40) {
             oPieceMooving.update();
         }
     }
@@ -188,6 +184,7 @@ function exitTetris() {
     $("#exitButton").hide();
     $("#scoreDisplay").hide();
     $("#powerDisplay").hide();
+    $("#powerDisplayUsed").hide();
     $("#createPiece").hide();
     $("#exportResultat").hide();
     $("#exporter").hide();
@@ -205,7 +202,7 @@ function exitTetris() {
     $("#ckeckBoxInverse").hide();
     $("#audioOption").hide();
     $("#lvl").hide();
-    $("#canvasNextPiece").hide();   
+    $("#canvasNextPiece").hide();
 }
 
 function raiseDifficulty() {
@@ -224,6 +221,7 @@ function mainLoop(iTimeStamp) {
     else if(score % 500 != 0 && bDifficultyToRaise){
         bDifficultyToRaise = false;
     }*/
+    displayPowerQueue();
     if (score >= maxScore) {
         exitTetris();
     }
@@ -257,30 +255,33 @@ function update() {
 }
 
 function usePower() {
-    if(powerTableAvailable){
-        switch(powerTableAvailable[0]){
+    if (nextPowerIndice) {
+        switch (powerTableAvailable[0]) {
             case powerTable[0]:
-                    powerTableAvailable.shift();
-                    doubleScoreUse();
+                powerTableAvailable.shift();
+                doubleScoreUse();
                 break;
             case powerTable[1]:
                 powerTableAvailable.shift();
-                    deletePieceUse();
+                deletePieceUse();
                 break;
         }
     }
 }
-function doubleScoreUse(){
+function doubleScoreUse() {
     doubleScorePower = true;
     console.log("doubleScoreUse()");
-    $("#powerDisplay").text(powerTableUsed[0]);
+    $("#powerDisplayUsed").text(powerTableUsed[0]);
 
 
 }
 
-function deletePieceUse(){
-    $("#powerDisplay").text(powerTableUsed[1]);
+function deletePieceUse() {
+    $("#powerDisplayUsed").text(powerTableUsed[1]);
     console.log("Delete piece utilisé")
+
+    iNextPiece = parseInt(Math.random() * 7);
+    drawNextPiece();
 
 
 
@@ -354,31 +355,41 @@ function drawNextPiece() {
 }
 
 function addScore(multiplier) {
-    if(!doubleScorePower){
-        score += 100 * Math.pow(2, multiplier);
+    var scoreToAdd = 100 * Math.pow(2, multiplier);
+    if (!doubleScorePower) {
+        console.log("Score ajouté : " + scoreToAdd);
+        score += scoreToAdd;
     }
-    else{
-        score += (100 * Math.pow(2, multiplier))*2;
+    else { 
+        console.log("Score ajouté : " + scoreToAdd + "Double score power donc : " + scoreToAdd * 2);
+        score += scoreToAdd * 2;
         doubleScorePower = false;
-
         $("#powerDisplay").text("");
-        console.log("Double score utilisé")
+        $("#powerDisplayUsed").text("");
     }
     $("#scoreDisplay").text(score.toString(10));
-    var nextPower;
-    console.log(score%(500* iterPower) >= 0);
-    console.log(score>=500*iterPower);
-    if (score%(500* iterPower) >= 0 && score>=500*iterPower ) {
-        console.log("On rentre la dedans")
+    nextPower = parseInt(Math.random() * 10);
+    if (nextPower > 1) {
+        console.log("On cherche un nouveau pouvoir");
         nextPower = parseInt(Math.random() * 2);
         console.log(nextPower);
-        powerTableAvailable.push(powerTable[nextPower-1]);
-        console.log($("#powerDisplay").text(powerTableToUse[nextPower-1]));
-        iterPower+=1;
+        nextPowerIndice.push(nextPower);
+        powerTableAvailable.push(powerTable[nextPower]);
     }
+}
+
+function addNextPower(iRandomNextPower){
+    nextPowerIndice.push(nextPower);
+    powerTableAvailable.push(powerTable[nextPower]);
+    console.log($("#powerDisplay").text(powerTableToUse[nextPower]));
 
 }
 
+function displayPowerQueue(){
+    var powersToDisplay = ""
+    powerTableAvailable.forEach(element => powersToDisplay += element + ", ");
+    $("#powerDisplay").text(powersToDisplay);
+}
 
 function Piece() {
     this.iX = 2;
@@ -438,21 +449,21 @@ Piece.prototype.rotate = function () {
 Piece.prototype.canRotate = function () {
     var bMoveSide = false;
     var bCollideLeft = false;
-    for(var i = 0; i < aNewPattern.length; i++) {
-        for(var j = 0; j < aNewPattern[0].length; j++) {
-            if((this.iX + j >= aGrid[0].length || this.iX + j < 0) && aNewPattern[i][j] === 1) {
+    for (var i = 0; i < aNewPattern.length; i++) {
+        for (var j = 0; j < aNewPattern[0].length; j++) {
+            if ((this.iX + j >= aGrid[0].length || this.iX + j < 0) && aNewPattern[i][j] === 1) {
                 bMoveSide = true;
-                if(this.iX + j < 0) {
+                if (this.iX + j < 0) {
                     bCollideLeft = true;
                 }
             }
-            if(this.iY + i >= aGrid.length || this.iY + i < 0 ||
-            (aNewPattern[i][j] === 1 && aGrid[this.iY + i][this.iX + j] === 1 && this.aPattern[i][j] === 0)) {
+            if (this.iY + i >= aGrid.length || this.iY + i < 0 ||
+                (aNewPattern[i][j] === 1 && aGrid[this.iY + i][this.iX + j] === 1 && this.aPattern[i][j] === 0)) {
                 return false;
             }
         }
     }
-    if(bMoveSide) {
+    if (bMoveSide) {
         this.moove(!bCollideLeft);
         this.canRotate();
     }
@@ -568,10 +579,10 @@ function exporter() {
     let contenu = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(
         {
             resultat:
-                {
-                    name: name,
-                    score: score,
-                }
+            {
+                name: name,
+                score: score,
+            }
         }));
     let telechargement = $("<a></a>").attr("href", contenu).attr("download", name + ".json");
     $("body").append(telechargement);
