@@ -29,6 +29,7 @@ var audVol;
 var inverse = 1;
 var nextPower = 0;
 var nextPowerIndice = [];
+var color = "#FF0000";
 
 $(document).ready(function () {
     oCtx = document.getElementById("myCanvas").getContext("2d");
@@ -73,6 +74,10 @@ $(document).ready(function () {
 
     $("#lvl").click(function () {
         lvlOpt();
+    });
+
+    $("#otherOption").click(function () {
+        otherOptionOpt();
     });
 
     $("#highVol").click(function () {
@@ -174,6 +179,7 @@ function GoOptions() {
     $("#playButton").hide();
     $("#audioOption").show();
     $("#lvl").show();
+    $("#otherOption").show();
     $("#return").show();
 }
 
@@ -203,6 +209,9 @@ function exitTetris() {
     $("#audioOption").hide();
     $("#lvl").hide();
     $("#canvasNextPiece").hide();
+    $("#otherOption").hide();
+    $("#col_couleur").hide();
+    $("#colorlabel").hide();
 }
 
 function raiseDifficulty() {
@@ -347,7 +356,8 @@ function drawNextPiece() {
             if (aPatternNextPiece[i][j] === 1) {
                 oCtxNextPiece.fillStyle = "#000000";
                 oCtxNextPiece.fillRect(j * iScaleNextPiece, i * iScaleNextPiece, iScaleNextPiece, iScaleNextPiece);
-                oCtxNextPiece.fillStyle = "#FF0000";
+                //oCtxNextPiece.fillStyle = "#FF0000";
+                oCtxNextPiece.fillStyle = color;
                 oCtxNextPiece.fillRect(j * iScaleNextPiece + 5, i * iScaleNextPiece + 5, iScaleNextPiece - 10, iScaleNextPiece - 10);
             }
         }
@@ -394,7 +404,8 @@ function displayPowerQueue(){
 function Piece() {
     this.iX = 2;
     this.iY = 0;
-    this.sColor = "#FF0000";
+    //this.sColor = "#FF0000";
+    this.sColor = color;
     this.aPattern = createPattern(iNextPiece);
     iNextPiece = parseInt(Math.random() * 7);
     $("#idNextPiece").text(iNextPiece.toString(10));
@@ -647,6 +658,9 @@ function audioOpt() {
     $("#audioOption").hide();
     $("#lvl").hide();
     $("#return").hide();
+    $("#otherOption").hide();
+    $("#col_couleur").hide();
+    $("#colorlabel").hide();
 
     $("#tetrisTheme").show();
     $("#ckeckBoxTheme").show();
@@ -678,6 +692,26 @@ function lvlOpt() {
     $("#volume").hide();
     $("#lowVol").hide();
     $("#return").hide();
+    $("#otherOption").hide();
+    $("#col_couleur").hide();
+    $("#colorlabel").hide();
+}
+
+function otherOptionOpt() {
+    $("#returnOpt").show();
+    $("#col_couleur").show();
+    $("#colorlabel").show();
+
+    $("#audioOption").hide();
+    $("#lvl").hide();
+    $("#otherOption").hide();
+    $("#tetrisTheme").hide();
+    $("#ckeckBoxTheme").hide();
+    $("#highVol").hide();
+    $("#volume").hide();
+    $("#lowVol").hide();
+    $("#return").hide();
+    $("#otherOption").hide();
 }
 
 function PlayMusic() {
@@ -718,12 +752,14 @@ function Return() {
     $("#playButton").show();
     $("#audioOption").hide();
     $("#lvl").hide();
+    $("#otherOption").hide();
     $("#return").hide();
 }
 
 function ReturnOpt() {
     $("#audioOption").show();
     $("#lvl").show();
+    $("#otherOption").show();
     $("#return").show();
     $("#returnOpt").hide();
     $("#tetrisTheme").hide();
@@ -733,6 +769,8 @@ function ReturnOpt() {
     $("#lowVol").hide();
     $("#Inverse").hide();
     $("#ckeckBoxInverse").hide();
+    $("#col_couleur").hide();
+    $("#colorlabel").hide();
 }
 
 function InverseKey() {
@@ -742,4 +780,8 @@ function InverseKey() {
     else {
         inverse = 1;
     }
+}
+
+function ChangeColor() {
+    color = document.getElementById('col_couleur').value;
 }
